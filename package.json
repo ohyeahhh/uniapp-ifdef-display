@@ -1,7 +1,7 @@
 {
-  "name": "UniAppConditionCompileDisplay",
-  "displayName": "uniApp Condition Compile Display",
-  "description": "可控制uniapp条件编译的代码置灰显示",
+  "name": "uniApp-macro-display",
+  "displayName": "uniApp macro display",
+  "description": "针对 uniapp 的条件编译的编程体验优化:1、Snippets -- 识别键入 ifdef、ifndef 进行代码提示 2、Folding -- 对添加编译代码支持折叠 3、Decorations -- 可控制uniapp条件编译的代码置灰显示",
   "keywords": [
     "uniapp",
     "ifdef",
@@ -10,7 +10,7 @@
     "微信小程序"
   ],
   "version": "0.0.2",
-  "publisher": "ohyeah",
+  "publisher": "ohyeahMake",
   "engines": {
     "vscode": "^1.17.0"
   },

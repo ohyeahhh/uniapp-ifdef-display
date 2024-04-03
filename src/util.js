@@ -45,21 +45,19 @@ const setConfig = function (key, value) {
   return settings.update(key, value, key !== "platformArr");
 };
 const DEFAULT_PLATFORM_TO_MACROS = {
-  "mp-weixin": ["MP-WEIXIN"],
-  "mp-baidu": ["MP-BAIDU"],
-  "mp-toutiao": ["MP-TOUTIAO"],
-  "mp-alipay": ["MP-ALIPAY"],
-  "mp-kuaishou": ["MP-KUAISHOU"],
-  "mp-lark": ["MP-LARK"],
-  "mp-qq": ["MP-QQ"],
-  "mp-jd": ["MP-JD"],
-  "mp-360": ["MP-360"],
+  "mp-weixin": ["MP-WEIXIN", "MP"],
+  "mp-baidu": ["MP-BAIDU", "MP"],
+  "mp-toutiao": ["MP-TOUTIAO", "MP"],
+  "mp-alipay": ["MP-ALIPAY", "MP"],
+  "mp-kuaishou": ["MP-KUAISHOU", "MP"],
+  "mp-lark": ["MP-LARK", "MP"],
+  "mp-qq": ["MP-QQ", "MP"],
+  "mp-jd": ["MP-JD", "MP"],
+  "mp-360": ["MP-360", "MP"],
   "quickapp-webview": ["QUICKAPP-WEBVIEW"],
   "quickapp-html": ["QUICKAPP-WEBVIEW-UNION"],
   "quickapp-webview-huawei": ["QUICKAPP-WEBVIEW-HUAWEI"],
-  "app-plus": ["APP-PLUS"],
-  "app-nvue": ["APP-NVUE"],
-  h5: ["H5"],
+  h5: ["H5", "WEB"],
 };
 
 let platformToMacro = {};
@@ -89,13 +87,15 @@ const updatePlatformToMacroMap = function () {
         ];
       if (baseMacros) {
         platformToMacro[key] = [...baseMacros];
-        if (meta?.["uni-app"]?.["scripts"]?.[key]?.define) {
-          const userDefinedMacros = Object.keys(
-            meta["uni-app"]["scripts"][key].define
-          );
-          if (userDefinedMacros && userDefinedMacros.length > 0) {
-            platformToMacro[key].push(...userDefinedMacros);
-          }
+      } else {
+        platformToMacro[key] = [];
+      }
+      if (meta?.["uni-app"]?.["scripts"]?.[key]?.define) {
+        const userDefinedMacros = Object.keys(
+          meta["uni-app"]["scripts"][key].define
+        );
+        if (userDefinedMacros && userDefinedMacros.length > 0) {
+          platformToMacro[key].push(...userDefinedMacros);
         }
       }
     });
