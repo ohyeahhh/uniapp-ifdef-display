@@ -1,105 +1,169 @@
-const vscode = require('vscode');
+const vscode = require("vscode");
 const XRegExp = require("xregexp");
 const window = vscode.window;
 const workspace = vscode.workspace;
+const fs = require("fs");
+const packageJsonPath = `${decodeURI(
+  vscode.workspace.workspaceFolders[0].uri
+)}/package.json`;
+const meta = JSON.parse(
+  fs.readFileSync(packageJsonPath.replace("file://", ""))
+);
 const htmlRule = {
-	start: "[ \t]*<!--[ \t]*#(ifndef|ifdef|if)[ \t]+(.*?)[ \t]*(?:-->|!>)(?:[ \t]*\n+)?",
-	end: "[ \t]*<!(?:--)?[ \t]*#endif[ \t]*(?:-->|!>)(?:[ \t]*\n)?",
+  start:
+    "[ \t]*<!--[ \t]*#(ifndef|ifdef|if)[ \t]+(.*?)[ \t]*(?:-->|!>)(?:[ \t]*\n+)?",
+  end: "[ \t]*<!(?:--)?[ \t]*#endif[ \t]*(?:-->|!>)(?:[ \t]*\n)?",
 };
 const scriptOrStyleRule = {
-	start: "[ \t]*(?://|/\\*)[ \t]*#(ifndef|ifdef|if)[ \t]+([^\n*]*)(?:\\*(?:\\*|/))?(?:[ \t]*\n+)?",
-	end: "[ \t]*(?://|/\\*)[ \t]*#endif[ \t]*(?:\\*(?:\\*|/))?(?:[ \t]*\n)?",
+  start:
+    "[ \t]*(?://|/\\*)[ \t]*#(ifndef|ifdef|if)[ \t]+([^\n*]*)(?:\\*(?:\\*|/))?(?:[ \t]*\n+)?",
+  end: "[ \t]*(?://|/\\*)[ \t]*#endif[ \t]*(?:\\*(?:\\*|/))?(?:[ \t]*\n)?",
 };
 
 const updateHasIfDef = function (globalState) {
-    let activeEditor = window.activeTextEditor;
-    if (!activeEditor || !activeEditor.document) {
-        return;
-    }
-    let text = activeEditor.document.getText();
-    if(/#ifdef|#ifndef/.test(text)) {
-        globalState.update("hasIfDef", true);
-        vscode.commands.executeCommand('setContext', 'hasIfDef', true);
-    } else {
-        globalState.update("hasIfDef", false);
-        vscode.commands.executeCommand('setContext', 'hasIfDef', false);
-    }
-}
+  let activeEditor = window.activeTextEditor;
+  if (!activeEditor || !activeEditor.document) {
+    return;
+  }
+  let text = activeEditor.document.getText();
+  if (/#ifdef|#ifndef/.test(text)) {
+    globalState.update("hasIfDef", true);
+    vscode.commands.executeCommand("setContext", "hasIfDef", true);
+  } else {
+    globalState.update("hasIfDef", false);
+    vscode.commands.executeCommand("setContext", "hasIfDef", false);
+  }
+};
 
-const getConfig = function(key) {
-    let settings = workspace.getConfiguration('ifdefdisplay');
-    return settings.get(key);
-}
+const getConfig = function (key) {
+  let settings = workspace.getConfiguration("ifdefdisplay");
+  return settings.get(key);
+};
 
-const setConfig = function(key, value) {
-    let settings = workspace.getConfiguration('ifdefdisplay');
-    return settings.update(key, value, true);
-}
+const setConfig = function (key, value) {
+  let settings = workspace.getConfiguration("ifdefdisplay");
+  return settings.update(key, value, key !== "platformArr");
+};
+const DEFAULT_PLATFORM_TO_MACROS = {
+  "mp-weixin": ["MP-WEIXIN"],
+  "mp-baidu": ["MP-BAIDU"],
+  "mp-toutiao": ["MP-TOUTIAO"],
+  "mp-alipay": ["MP-ALIPAY"],
+  "mp-kuaishou": ["MP-KUAISHOU"],
+  "mp-lark": ["MP-LARK"],
+  "mp-qq": ["MP-QQ"],
+  "mp-jd": ["MP-JD"],
+  "mp-360": ["MP-360"],
+  "quickapp-webview": ["QUICKAPP-WEBVIEW"],
+  "quickapp-html": ["QUICKAPP-WEBVIEW-UNION"],
+  "quickapp-webview-huawei": ["QUICKAPP-WEBVIEW-HUAWEI"],
+  "app-plus": ["APP-PLUS"],
+  "app-nvue": ["APP-NVUE"],
+  h5: ["H5"],
+};
 
-const showQuickPick = async function() {
-    const result = await window.showQuickPick(['MP-WEIXIN','MP-BAIDU','MP-TOUTIAO','MP-ALIPAY','MP-KUAISHOU','MP','MP-LARK','MP-QQ','MP-JD','MP-360','QUICKAPP-WEBVIEW','QUICKAPP-WEBVIEW-UNION','QUICKAPP-WEBVIEW-HUAWEI','VUE3', 'APP-PLUS', 'APP-NVUE','H5'], {
-		placeHolder: '请选择%PLATFORM%',
-        canPickMany: true
-	});
-    setConfig("platformArr", result);
-}
+let platformToMacro = {};
+const getAllMacro = function () {
+  if (Object.keys(platformToMacro).length === 0) {
+    updatePlatformToMacroMap();
+  }
+  let platformArr = getConfig("platformArr");
+  const allMacro = platformArr.reduce((allMacro, platform) => {
+    allMacro.push(...platformToMacro[platform]);
+    return allMacro;
+  }, []);
+  return [...new Set(allMacro)];
+};
 
-const updateStatusItemBar = function(statusItemBar, globalState) {
-    let hasIfDef = globalState.get("hasIfDef", false);
-    if(getConfig('isEnable') && hasIfDef) {
-        let platformArr = getConfig("platformArr");
-        if(platformArr.length == 0) {
-            statusItemBar.hide();
-            return;
+const updatePlatformToMacroMap = function () {
+  platformToMacro = {};
+  if (
+    meta["uni-app"] &&
+    meta["uni-app"]["scripts"] &&
+    Object.keys(meta["uni-app"]["scripts"]).length > 0
+  ) {
+    Object.keys(meta["uni-app"]["scripts"]).forEach((key) => {
+      const baseMacros =
+        DEFAULT_PLATFORM_TO_MACROS[
+          meta?.["uni-app"]?.["scripts"]?.[key]?.env?.UNI_PLATFORM
+        ];
+      if (baseMacros) {
+        platformToMacro[key] = [...baseMacros];
+        if (meta?.["uni-app"]?.["scripts"]?.[key]?.define) {
+          const userDefinedMacros = Object.keys(
+            meta["uni-app"]["scripts"][key].define
+          );
+          if (userDefinedMacros && userDefinedMacros.length > 0) {
+            platformToMacro[key].push(...userDefinedMacros);
+          }
         }
-        statusItemBar.text = "当前%PLATFORM%：" + platformArr.join(" ");
-        statusItemBar.show();
-    } else {
-        statusItemBar.hide();
-    }
-}
+      }
+    });
+  }
+  Object.assign(platformToMacro, DEFAULT_PLATFORM_TO_MACROS);
+};
 
-const getFoldingRangeList = function(document, rule) {
-    let foldingRangeArr = [];
-    let content = document.getText();
-    function getFolding(content, startOrigin = 0) {
-        let matches = XRegExp.matchRecursive(
-            content,
-            rule.start,
-            rule.end,
-            "gmi",
-            {
-                valueNames: [null, "left", "match", "right"],
-            }
-        );
-        let start;
-        matches.forEach(function (match) {
-            switch (match.name) {
-                case "left":
-                    start = document.positionAt(match.start + startOrigin);
-                    break;
-                case "match":
-                    match.start = match.start + startOrigin;
-                    match.end = match.end + startOrigin;
-                    getFolding(match.value, match.start);
-                    break;
-                case "right":
-                    let end = document.positionAt(match.start + startOrigin);
-                    foldingRangeArr.push(new vscode.FoldingRange(start.line, end.line));
-                    break;
-            }
-        });
+const showQuickPick = async function () {
+  updatePlatformToMacroMap();
+  const filterableArr = Object.keys(platformToMacro);
+  const result = await window.showQuickPick(filterableArr, {
+    placeHolder: "请勾选编译平台（可多选）",
+    canPickMany: true,
+  });
+  setConfig("platformArr", result);
+};
+
+const updateStatusItemBar = function (statusItemBar, globalState) {
+  let hasIfDef = globalState.get("hasIfDef", false);
+  if (getConfig("isEnable") && hasIfDef) {
+    let platformArr = getConfig("platformArr");
+    if (platformArr.length == 0) {
+      statusItemBar.text = "focus on platform：all";
+    } else {
+      statusItemBar.text = "focus on platform：" + platformArr.join(" ");
     }
-    getFolding(content, 0);
-    return foldingRangeArr;
-}
+    statusItemBar.show();
+  } else {
+    statusItemBar.hide();
+  }
+};
+
+const getFoldingRangeList = function (document, rule) {
+  let foldingRangeArr = [];
+  let content = document.getText();
+  function getFolding(content, startOrigin = 0) {
+    let matches = XRegExp.matchRecursive(content, rule.start, rule.end, "gmi", {
+      valueNames: [null, "left", "match", "right"],
+    });
+    let start;
+    matches.forEach(function (match) {
+      switch (match.name) {
+        case "left":
+          start = document.positionAt(match.start + startOrigin);
+          break;
+        case "match":
+          match.start = match.start + startOrigin;
+          match.end = match.end + startOrigin;
+          getFolding(match.value, match.start);
+          break;
+        case "right":
+          let end = document.positionAt(match.start + startOrigin);
+          foldingRangeArr.push(new vscode.FoldingRange(start.line, end.line));
+          break;
+      }
+    });
+  }
+  getFolding(content, 0);
+  return foldingRangeArr;
+};
 
 module.exports = {
-    htmlRule,
-    scriptOrStyleRule,
-    updateHasIfDef,
-    getConfig,
-    showQuickPick,
-    updateStatusItemBar,
-    getFoldingRangeList
+  htmlRule,
+  scriptOrStyleRule,
+  updateHasIfDef,
+  getConfig,
+  showQuickPick,
+  updateStatusItemBar,
+  getFoldingRangeList,
+  getAllMacro,
 };
