@@ -9,7 +9,7 @@
     "小程序",
     "微信小程序"
   ],
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "ohyeahMake",
   "engines": {
     "vscode": "^1.17.0"
@@ -73,12 +73,12 @@
         },
         "ifdefdisplay.darkColor": {
           "type": "string",
-          "default": "#333",
+          "default": "#888",
           "description": "Set dark mode color"
         },
         "ifdefdisplay.lightColor": {
           "type": "string",
-          "default": "#ddd",
+          "default": "#aaa",
           "description": "Set light mode color"
         }
       }

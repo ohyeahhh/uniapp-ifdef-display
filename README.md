@@ -38,3 +38,7 @@
 ### 支持设置置灰文本颜色
 
 ![image-20220912172738939](https://s2.loli.net/2022/09/12/LMwRe26ItJkEAhi.png)
+
+# 感谢
+
+此组件基于 [holychen555/uniapp-ifdef-display:master](https://github.com/holychen555/uniapp-ifdef-display) 基础上改的。
