@@ -38,7 +38,7 @@
     "vscode:prepublish": "cross-env NODE_ENV=production webpack --mode production",
     "dev": "cross-env NODE_ENV=development webpack --mode development --watch",
     "test": "node ./test/runTest.js",
-    "publish": "vsce package && vsce publish -p ohyeahMake"
+    "publish": "vsce package && vsce publish"
   },
   "icon": "uniapp.png",
   "contributes": {
