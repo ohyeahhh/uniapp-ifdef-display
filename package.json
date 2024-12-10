@@ -9,7 +9,7 @@
     "小程序",
     "微信小程序"
   ],
-  "version": "0.0.3",
+  "version": "0.0.5",
   "publisher": "ohyeahMake",
   "engines": {
     "vscode": "^1.17.0"
@@ -37,7 +37,8 @@
   "scripts": {
     "vscode:prepublish": "cross-env NODE_ENV=production webpack --mode production",
     "dev": "cross-env NODE_ENV=development webpack --mode development --watch",
-    "test": "node ./test/runTest.js"
+    "test": "node ./test/runTest.js",
+    "publish": "vsce package && vsce publish -p ohyeahMake"
   },
   "icon": "uniapp.png",
   "contributes": {

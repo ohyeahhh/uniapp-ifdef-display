@@ -6,9 +6,7 @@ const fs = require("fs");
 const packageJsonPath = `${decodeURI(
   vscode.workspace.workspaceFolders[0].uri
 )}/package.json`;
-const meta = JSON.parse(
-  fs.readFileSync(packageJsonPath.replace("file://", ""))
-);
+
 const htmlRule = {
   start:
     "[ \t]*<!--[ \t]*#(ifndef|ifdef|if)[ \t]+(.*?)[ \t]*(?:-->|!>)(?:[ \t]*\n+)?",
@@ -58,6 +56,10 @@ const DEFAULT_PLATFORM_TO_MACROS = {
   "quickapp-html": ["QUICKAPP-WEBVIEW-UNION"],
   "quickapp-webview-huawei": ["QUICKAPP-WEBVIEW-HUAWEI"],
   h5: ["H5", "WEB"],
+  WEB: ["H5", "WEB"],
+  app: ["APP", "APP-PLUS", "APP-HARMONY"],
+  "app-plus": ["APP-PLUS"],
+  "app-harmony": ["APP-HARMONY"],
 };
 
 let platformToMacro = {};
@@ -75,6 +77,9 @@ const getAllMacro = function () {
 
 const updatePlatformToMacroMap = function () {
   platformToMacro = {};
+  const meta = JSON.parse(
+    fs.readFileSync(packageJsonPath.replace("file://", ""))
+  );
   if (
     meta["uni-app"] &&
     meta["uni-app"]["scripts"] &&
